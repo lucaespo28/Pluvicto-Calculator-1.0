@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pluvicto Batch Calculator — AAA Novartis</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Base ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:        #060810;
+  --bg2:       #0c0f1a;
+  --bg3:       #111520;
+  --bg4:       #161b28;
+  --border:    #1c2235;
+  --border2:   #252d42;
+  --text:      #e2e8f8;
+  --text2:     #8892aa;
+  --text3:     #4a5468;
+  --blue:      #3b82f6;
+  --blue-dim:  #1d3a6e;
+  --blue-bg:   #0a1428;
+  --green:     #22c55e;
+  --green-dim: #14532d;
+  --green-bg:  #071a0f;
+  --red:       #ef4444;
+  --red-dim:   #7f1d1d;
+  --red-bg:    #1a0707;
+  --yellow:    #f59e0b;
+  --yellow-dim:#78350f;
+  --yellow-bg: #1a1000;
+  --purple:    #a855f7;
+  --purple-dim:#581c87;
+  --purple-bg: #130a1f;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Syne', sans-serif;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Layout ───────────────────────────────────────────────────────────────── */
+.app { max-width: 980px; margin: 0 auto; padding: 32px 20px 60px; }
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+.header {
+  display: flex; align-items: center; gap: 16px; margin-bottom: 12px;
+}
+.header-icon {
+  width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0;
+  background: linear-gradient(135deg, #0d2050 0%, #1d4ed8 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; box-shadow: 0 4px 24px rgba(59,130,246,0.3);
+}
+.header-title { font-family: var(--sans); font-size: 22px; font-weight: 800; color: #f0f6ff; letter-spacing: -0.02em; }
+.header-sub { font-size: 11px; color: var(--text3); letter-spacing: 0.06em; margin-top: 3px; }
+
+/* ── Status bar ───────────────────────────────────────────────────────────── */
+.statusbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 24px; }
+.tag {
+  font-size: 11px; border-radius: 6px; padding: 3px 10px;
+  border: 1px solid; white-space: nowrap;
+}
+.tag-green  { background: var(--green-bg);  border-color: var(--green-dim);  color: var(--green); }
+.tag-red    { background: var(--red-bg);    border-color: var(--red-dim);    color: var(--red); }
+.tag-yellow { background: var(--yellow-bg); border-color: var(--yellow-dim); color: var(--yellow); }
+.tag-neutral{ background: var(--bg3);       border-color: var(--border2);    color: var(--text3); }
+
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
+.tabs {
+  display: flex; gap: 4px; background: var(--bg2); padding: 4px;
+  border-radius: 12px; border: 1px solid var(--border); margin-bottom: 24px;
+}
+.tab-btn {
+  flex: 1; padding: 10px 4px; border-radius: 9px; border: none;
+  background: transparent; color: var(--text3); font-family: var(--mono);
+  font-size: 11px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s;
+}
+.tab-btn.active { background: #1a2540; color: var(--blue); }
+.tab-btn:hover:not(.active) { color: var(--text2); }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* ── Cards ────────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden; margin-bottom: 20px;
+}
+.card-header {
+  background: var(--bg); border-bottom: 1px solid var(--border);
+  padding: 12px 24px; display: flex; align-items: center; gap: 10px;
+}
+.card-accent { width: 3px; height: 18px; border-radius: 2px; flex-shrink: 0; }
+.card-title { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 500; }
+.card-body { padding: 22px 24px; }
+
+/* ── Grid ─────────────────────────────────────────────────────────────────── */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.grid4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
+
+/* ── Form elements ────────────────────────────────────────────────────────── */
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 10px; color: var(--text3); letter-spacing: 0.08em; margin-bottom: 6px; }
+.field-row { display: flex; align-items: center; gap: 8px; }
+input[type=number], input[type=datetime-local], select {
+  background: var(--bg4); border: 1px solid var(--border2); border-radius: 8px;
+  color: var(--text); padding: 9px 13px; font-size: 13px; font-family: var(--mono);
+  width: 100%; outline: none; transition: border-color 0.15s;
+}
+input[type=number]:focus, input[type=datetime-local]:focus, select:focus {
+  border-color: var(--blue);
+}
+input[readonly] { background: var(--bg); color: var(--text3); cursor: default; }
+.unit { font-size: 11px; color: var(--text3); white-space: nowrap; }
+select { cursor: pointer; }
+
+/* ── Batch type toggle ────────────────────────────────────────────────────── */
+.toggle-group { display: flex; gap: 8px; }
+.toggle-btn {
+  flex: 1; padding: 10px 0; border-radius: 8px; border: 1px solid var(--border2);
+  background: var(--bg4); color: var(--text3); font-family: var(--mono);
+  font-size: 13px; cursor: pointer; transition: all 0.15s;
+}
+.toggle-btn.active {
+  border-color: var(--blue); background: #0d1e40; color: #93c5fd;
+}
+
+/* ── Pills / stat boxes ───────────────────────────────────────────────────── */
+.pill {
+  border-radius: 10px; padding: 11px 14px; border: 1px solid;
+}
+.pill-label { font-size: 9px; color: var(--text3); letter-spacing: 0.1em; margin-bottom: 5px; }
+.pill-value { font-size: 14px; font-weight: 500; }
+.pill-unit  { font-size: 10px; color: var(--text3); margin-left: 3px; }
+.pill-lg .pill-value { font-size: 18px; font-weight: 600; }
+
+.pill-green  { background: var(--green-bg);  border-color: var(--green-dim);  }
+.pill-green  .pill-value { color: var(--green); }
+.pill-red    { background: var(--red-bg);    border-color: var(--red-dim);    }
+.pill-red    .pill-value { color: var(--red); }
+.pill-yellow { background: var(--yellow-bg); border-color: var(--yellow-dim); }
+.pill-yellow .pill-value { color: var(--yellow); }
+.pill-purple { background: var(--purple-bg); border-color: var(--purple-dim); }
+.pill-purple .pill-value { color: var(--purple); }
+.pill-neutral{ background: var(--bg3);       border-color: var(--border2);    }
+.pill-neutral .pill-value { color: var(--text); }
+
+/* ── Alert boxes ─────────────────────────────────────────────────────────── */
+.alert { border-radius: 10px; padding: 14px 18px; border-left: 4px solid; margin-top: 14px; }
+.alert-green  { background: var(--green-bg);  border-color: var(--green);  color: var(--text2); }
+.alert-red    { background: var(--red-bg);    border-color: var(--red);    color: var(--text2); }
+.alert-yellow { background: var(--yellow-bg); border-color: var(--yellow); color: var(--text2); }
+.alert-purple { background: var(--purple-bg); border-color: var(--purple); color: var(--text2); }
+.alert-title  { font-size: 12px; font-weight: 600; margin-bottom: 8px; letter-spacing: 0.06em; }
+.alert-green  .alert-title { color: var(--green); }
+.alert-red    .alert-title { color: var(--red); }
+.alert-yellow .alert-title { color: var(--yellow); }
+.alert-purple .alert-title { color: var(--purple); }
+
+/* ── Divider ─────────────────────────────────────────────────────────────── */
+.divider { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+
+/* ── Tables ───────────────────────────────────────────────────────────────── */
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.data-table th {
+  padding: 8px 10px; text-align: left; font-size: 9px; color: var(--text3);
+  letter-spacing: 0.08em; font-weight: 500; border-bottom: 1px solid var(--border);
+}
+.data-table td { padding: 7px 10px; border-bottom: 1px solid #0e111a; }
+.data-table tr:nth-child(even) td { background: #0a0d14; }
+.data-table .num { font-weight: 600; }
+.data-table input[type=datetime-local] { width: 170px; padding: 5px 8px; font-size: 11px; }
+
+/* ── CQ table ────────────────────────────────────────────────────────────── */
+.cq-badge {
+  border-radius: 5px; padding: 2px 8px; font-size: 10px;
+  display: inline-block;
+}
+.cq-blue   { background: #0d1e3c; color: #60a5fa; }
+.cq-green  { background: #0a2018; color: #4ade80; }
+
+/* ── Loss entry ──────────────────────────────────────────────────────────── */
+.loss-entry {
+  background: var(--bg); border: 1px solid var(--yellow-dim);
+  border-radius: 10px; padding: 16px; margin-bottom: 12px;
+}
+.loss-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.loss-title  { font-size: 11px; color: var(--yellow); letter-spacing: 0.08em; }
+.btn-remove  { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; line-height: 1; }
+.btn-remove:hover { color: var(--red); }
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.btn-add {
+  width: 100%; padding: 12px 0; border-radius: 8px; border: 1px dashed;
+  background: transparent; font-family: var(--mono); font-size: 12px;
+  cursor: pointer; letter-spacing: 0.08em; transition: all 0.15s;
+}
+.btn-add-yellow { border-color: var(--yellow-dim); color: var(--yellow); }
+.btn-add-yellow:hover { background: var(--yellow-bg); }
+.btn-add-purple { border-color: var(--purple-dim); color: var(--purple); }
+.btn-add-purple:hover { background: var(--purple-bg); }
+.btn-add-blue { border-color: var(--blue-dim); color: var(--blue); }
+.btn-add-blue:hover { background: var(--blue-bg); }
+
+/* ── Vial count selector ─────────────────────────────────────────────────── */
+.vial-count { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 18px; }
+.vcount-btn {
+  padding: 5px 11px; border-radius: 6px; border: 1px solid var(--border2);
+  background: var(--bg4); color: var(--text3); font-family: var(--mono);
+  font-size: 11px; cursor: pointer; transition: all 0.15s;
+}
+.vcount-btn.active { border-color: var(--blue); background: #0d1e40; color: #93c5fd; }
+
+/* ── Retransfer section ──────────────────────────────────────────────────── */
+.retransfer-toggle {
+  display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+  border-radius: 8px; border: 1px dashed var(--border2); cursor: pointer;
+  background: transparent; color: var(--text3); font-family: var(--mono);
+  font-size: 12px; width: 100%; transition: all 0.15s; margin-top: 10px;
+}
+.retransfer-toggle.active { border-color: var(--purple-dim); color: var(--purple); background: var(--purple-bg); }
+.retransfer-body { margin-top: 14px; }
+.orig-values {
+  background: var(--bg); border-radius: 10px; padding: 14px 16px;
+  border: 1px solid var(--border); margin-bottom: 16px;
+}
+.orig-label { font-size: 10px; color: var(--text3); letter-spacing: 0.08em; margin-bottom: 10px; }
+
+/* ── Big correction number ────────────────────────────────────────────────── */
+.correction-value {
+  font-size: 28px; font-weight: 700; color: var(--purple); font-family: var(--sans);
+  margin: 6px 0;
+}
+
+/* ── Reference table ─────────────────────────────────────────────────────── */
+.ref-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.ref-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+.ref-table td:first-child { color: var(--text3); width: 50%; }
+.ref-table td:last-child { color: var(--text); font-weight: 500; text-align: right; }
+
+/* ── Yield row ────────────────────────────────────────────────────────────── */
+.yield-row {
+  border-radius: 9px; padding: 12px 14px; margin-bottom: 10px; border: 1px solid;
+}
+.yield-row-green  { background: var(--green-bg);  border-color: var(--green-dim);  }
+.yield-row-red    { background: var(--red-bg);    border-color: var(--red-dim);    }
+.yield-row-neutral{ background: var(--bg3);       border-color: var(--border2);    }
+.yield-name  { font-size: 10px; color: var(--text3); margin-bottom: 5px; letter-spacing: 0.06em; }
+.yield-flex  { display: flex; justify-content: space-between; align-items: baseline; }
+.yield-val   { font-size: 17px; font-weight: 600; }
+.yield-range { font-size: 10px; color: var(--text3); }
+.yield-row-green  .yield-val { color: var(--green); }
+.yield-row-red    .yield-val { color: var(--red); }
+.yield-row-neutral .yield-val { color: var(--text2); }
+
+/* ── Vol summary ─────────────────────────────────────────────────────────── */
+.vol-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.vol-label { color: var(--text2); }
+.vol-value { font-weight: 500; }
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .grid2, .grid3, .grid4 { grid-template-columns: 1fr; }
+  .tabs { flex-direction: column; }
+  .vial-count { gap: 4px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-icon">⚛</div>
+    <div>
+      <div class="header-title">Pluvicto · Calcolatore di Lotto</div>
+      <div class="header-sub">¹⁷⁷Lu-PSMA-617 · AAA Novartis · t½=6.647d · Shelf life 120h dal TC · EMA SmPC 2025</div>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="statusbar" id="statusbar"></div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('setup')">01 · SETUP</button>
+    <button class="tab-btn" onclick="switchTab('vials')">02 · VIALS</button>
+    <button class="tab-btn" onclick="switchTab('losses')">03 · PERDITE</button>
+    <button class="tab-btn" onclick="switchTab('summary')">04 · RIEPILOGO</button>
+  </div>
+
+  <!-- ═══ TAB: SETUP ════════════════════════════════════════════════════════ -->
+  <div id="tab-setup" class="tab-pane active">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-accent" style="background:var(--blue)"></div>
+        <span class="card-title" style="color:var(--blue)">IPC-DS — Drug Substance / Sintesi</span>
+      </div>
+      <div class="card-body">
+        <div class="grid2">
+          <div>
+            <div class="field">
+              <label>TIPO LOTTO</label>
+              <div class="toggle-group">
+                <button class="toggle-btn" id="btn200" onclick="setBatchType('200')">200 GBq</button>
+                <button class="toggle-btn active" id="btn400" onclick="setBatchType('400')">400 GBq</button>
+              </div>
+            </div>
+            <div class="field">
+              <label>IPC-1-DS · ATTIVITÀ SORGENTE (320–480 GBq)</label>
+              <div class="field-row">
+                <input type="number" id="sourceAct" min="0" step="0.1" placeholder="es. 460" oninput="calculate()">
+                <span class="unit">GBq</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="field">
+              <label>ATTIVITÀ MADRE POST-SINTESI (Tm)</label>
+              <div class="field-row">
+                <input type="number" id="motherAct" min="0" step="0.001" placeholder="es. 432" oninput="calculate()">
+                <span class="unit">GBq</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>IPC-5-DS · VOLUME MADRE (≥16.0 mL)</label>
+              <div class="field-row">
+                <input type="number" id="motherVol" min="0" step="0.01" placeholder="es. 21.5" oninput="calculate()">
+                <span class="unit">mL</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Synthesis Yield -->
+        <div id="synthYieldBox" style="display:none; margin-top:4px;">
+          <div class="grid3">
+            <div class="pill pill-neutral" id="synthYieldPill">
+              <div class="pill-label">DRUG SUBSTANCE SYNTHESIS YIELD</div>
+              <div class="pill-value" id="synthYieldVal">—</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:3px;">Range: 91.2% – 102.9%</div>
+            </div>
+            <div class="pill pill-neutral" id="concMotherPill">
+              <div class="pill-label">CONC. MADRE (pre-diluizione)</div>
+              <div class="pill-value" id="concMotherVal">—<span class="pill-unit">MBq/mL</span></div>
+            </div>
+            <div class="pill pill-neutral" id="sourceCheckPill">
+              <div class="pill-label">SORGENTE IPC-1-DS</div>
+              <div class="pill-value" id="sourceCheckVal">—</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:3px;">Range: 320–480 GBq</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-accent" style="background:var(--green)"></div>
+        <span class="card-title" style="color:var(--green)">IPC-DP — Drug Product / Formulazione</span>
+      </div>
+      <div class="card-body">
+        <div class="grid3">
+          <div class="field">
+            <label>END OF PRODUCTION (EOP)</label>
+            <input type="datetime-local" id="eop" oninput="calculate()">
+          </div>
+          <div class="field">
+            <label>TIME OF CALIBRATION (TC)</label>
+            <input type="datetime-local" id="tc" oninput="calculate()">
+          </div>
+          <div class="field">
+            <label>SHELF LIFE — SCADENZA PRODOTTO</label>
+            <input type="text" id="expiry" readonly style="color:var(--yellow);background:var(--yellow-bg);border-color:var(--yellow-dim);">
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Bulk mode toggle -->
+        <div style="margin-bottom:16px;">
+          <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;margin-bottom:8px;">MODALITÀ CALCOLO BULK</div>
+          <div class="toggle-group">
+            <button class="toggle-btn active" id="btnModeVials" onclick="setBulkMode('vials')">Da tab Vials (Tinj per vial)</button>
+            <button class="toggle-btn" id="btnModeDirect" onclick="setBulkMode('direct')">Bulk diretta (volume + attività totale)</button>
+          </div>
+        </div>
+
+        <!-- Direct bulk inputs — shown only in direct mode -->
+        <div id="directBulkInputs" style="display:none; margin-bottom:16px;">
+          <div style="background:var(--bg3);border:1px solid var(--blue-dim);border-radius:10px;padding:16px 18px;">
+            <div style="font-size:10px;color:var(--blue);letter-spacing:0.08em;margin-bottom:12px;">VOLUME E ATTIVITÀ TOTALE BULK PIANIFICATA</div>
+            <div class="grid2">
+              <div class="field" style="margin-bottom:0">
+                <label>VOLUME TOTALE BULK (comm. + CQ)</label>
+                <div class="field-row">
+                  <input type="number" id="directBulkVol" min="0" step="0.1" placeholder="es. 406" oninput="calculate()">
+                  <span class="unit">mL</span>
+                </div>
+              </div>
+              <div class="field" style="margin-bottom:0">
+                <label>ATTIVITÀ TOTALE BULK NECESSARIA</label>
+                <div class="field-row">
+                  <input type="number" id="directBulkAct" min="0" step="0.1" placeholder="es. 406000" oninput="calculate()">
+                  <span class="unit">MBq</span>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:10px;font-size:11px;color:var(--text3);">
+              💡 Puoi trovare questi valori in fondo al planning (Totale delle fiale — Volume minimo totale e Attività necessaria a Tm)
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;margin-bottom:12px;">
+          IPC-5-DP · CONCENTRAZIONE BULK (1000 MBq/mL ±5% a EOP · Target interno: 1030 MBq/mL ±5%)
+        </div>
+        <div class="grid4" id="concPills">
+          <div class="pill pill-neutral">
+            <div class="pill-label">SALINE NECESSARIA (calc.)</div>
+            <div class="pill-value" id="salineVal">—<span class="pill-unit">mL</span></div>
+          </div>
+          <div class="pill pill-neutral" id="concEopPill">
+            <div class="pill-label">CONC. BULK @ EOP</div>
+            <div class="pill-value" id="concEopVal">—<span class="pill-unit">MBq/mL</span></div>
+          </div>
+          <div class="pill pill-neutral" id="concTcPill">
+            <div class="pill-label">CONC. BULK @ TC</div>
+            <div class="pill-value" id="concTcVal">—<span class="pill-unit">MBq/mL</span></div>
+          </div>
+          <div class="pill pill-neutral" id="eopStatusPill">
+            <div class="pill-label">STATO IPC-5-DP</div>
+            <div class="pill-value" id="eopStatusVal">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: VIALS ════════════════════════════════════════════════════════ -->
+  <div id="tab-vials" class="tab-pane">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-accent" style="background:var(--blue)"></div>
+        <span class="card-title" style="color:var(--blue)">Vials Commerciali</span>
+      </div>
+      <div class="card-body">
+        <div class="vial-count">
+          <span style="font-size:11px;color:var(--text3);">N° VIALS COMM.:</span>
+          <button class="vcount-btn" onclick="setVialCount(5)">5</button>
+          <button class="vcount-btn" onclick="setVialCount(10)">10</button>
+          <button class="vcount-btn" onclick="setVialCount(15)">15</button>
+          <button class="vcount-btn" onclick="setVialCount(20)">20</button>
+          <button class="vcount-btn" onclick="setVialCount(25)">25</button>
+          <button class="vcount-btn" onclick="setVialCount(30)">30</button>
+          <button class="vcount-btn" onclick="setVialCount(35)">35</button>
+          <button class="vcount-btn active" onclick="setVialCount(40)">40</button>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Tinj (data e ora)</th>
+                <th>ΔT dal TC (h)</th>
+                <th>Decay %</th>
+                <th>Vol a Tc (mL)</th>
+                <th>A a Tc (MBq)</th>
+                <th>A a Tinj (MBq)</th>
+                <th>-5%</th>
+                <th>+5%</th>
+                <th>Stato</th>
+              </tr>
+            </thead>
+            <tbody id="vialsTableBody"></tbody>
+          </table>
+        </div>
+
+        <hr class="divider">
+        <div class="grid4" id="vialTotals">
+          <div class="pill pill-neutral">
+            <div class="pill-label">VIALS COMMERCIALI</div>
+            <div class="pill-value" id="totalVials">— / 40</div>
+          </div>
+          <div class="pill pill-neutral">
+            <div class="pill-label">VOLUME COMM. TOTALE</div>
+            <div class="pill-value" id="totalCommVol">—<span class="pill-unit">mL</span></div>
+          </div>
+          <div class="pill pill-neutral">
+            <div class="pill-label">ATT. TOTALE a TC</div>
+            <div class="pill-value" id="totalActTc">—<span class="pill-unit">GBq</span></div>
+          </div>
+          <div class="pill pill-neutral">
+            <div class="pill-label">ATT. TOTALE a Tinj</div>
+            <div class="pill-value" id="totalActTinj">—<span class="pill-unit">GBq</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-accent" style="background:var(--green)"></div>
+        <span class="card-title" style="color:var(--green)">Vials CQ (CQ0 – CQ9)</span>
+      </div>
+      <div class="card-body">
+        <table class="data-table">
+          <thead>
+            <tr><th>ID</th><th>Tipo</th><th>Volume (mL)</th><th>A a Tc (MBq)</th><th>Scopo</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="num">CQ0 Cond</td><td><span class="cq-badge cq-blue">COND</span></td><td class="num">4.00</td><td id="cq0act">—</td><td style="color:var(--text3)">Riempimento linea — prima vial</td></tr>
+            <tr><td class="num">CQ1 Ste</td><td><span class="cq-badge cq-green">STE</span></td><td class="num">0.30</td><td id="cq1act">—</td><td style="color:var(--text3)">Sterilità</td></tr>
+            <tr><td class="num">CQ2 Ste</td><td><span class="cq-badge cq-green">STE</span></td><td class="num">0.30</td><td id="cq2act">—</td><td style="color:var(--text3)">Sterilità</td></tr>
+            <tr><td class="num">CQ3 Fis</td><td><span class="cq-badge cq-blue">FIS</span></td><td class="num">5.00</td><td id="cq3act">—</td><td style="color:var(--text3)">Analisi fisico-chimiche</td></tr>
+            <tr><td class="num">CQ4 LAL</td><td><span class="cq-badge cq-green">LAL</span></td><td class="num">0.30</td><td id="cq4act">—</td><td style="color:var(--text3)">Endotossine batteriche</td></tr>
+            <tr><td class="num">CQ5 LAL</td><td><span class="cq-badge cq-green">LAL</span></td><td class="num">0.30</td><td id="cq5act">—</td><td style="color:var(--text3)">Endotossine batteriche</td></tr>
+            <tr><td class="num">CQ6 Cam</td><td><span class="cq-badge cq-blue">CAM</span></td><td class="num">0.50</td><td id="cq6act">—</td><td style="color:var(--text3)">Controcampione</td></tr>
+            <tr><td class="num">CQ7 Cam</td><td><span class="cq-badge cq-blue">CAM</span></td><td class="num">0.50</td><td id="cq7act">—</td><td style="color:var(--text3)">Controcampione</td></tr>
+            <tr><td class="num">CQ8 Ste</td><td><span class="cq-badge cq-green">STE</span></td><td class="num">0.30</td><td id="cq8act">—</td><td style="color:var(--text3)">Sterilità</td></tr>
+            <tr><td class="num">CQ9 Ste</td><td><span class="cq-badge cq-green">STE</span></td><td class="num">0.30</td><td id="cq9act">—</td><td style="color:var(--text3)">Sterilità</td></tr>
+            <tr style="background:#0a0d14;font-weight:600;">
+              <td colspan="2" style="color:var(--text3);font-size:10px;">TOTALE CQ</td>
+              <td class="num" style="color:var(--text);">11.80 mL</td>
+              <td class="num" id="cqTotalAct" style="color:var(--text);">—</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: PERDITE ══════════════════════════════════════════════════════ -->
+  <div id="tab-losses" class="tab-pane">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-accent" style="background:var(--yellow)"></div>
+        <span class="card-title" style="color:var(--yellow)">Registrazione Perdite / Spillage</span>
+      </div>
+      <div class="card-body">
+        <div id="lossesContainer">
+          <div id="noLossMsg" style="text-align:center;color:var(--text3);padding:20px 0;font-size:13px;">
+            Nessuna perdita registrata — lotto nominale
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:4px;">
+          <button class="btn-add btn-add-yellow" onclick="addLoss()">+ REGISTRA PERDITA / SPILLAGE</button>
+        </div>
+
+        <button class="retransfer-toggle" id="rtToggle" onclick="toggleRetransfer()">
+          <span id="rtToggleIcon">+</span>
+          <span id="rtToggleLabel">SCENARIO RITRASFERIMENTO MADRE</span>
+        </button>
+
+        <!-- Loss impact summary -->
+        <div id="lossSummary" style="display:none;margin-top:20px;">
+          <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;margin-bottom:12px;">IMPATTO CUMULATIVO PERDITE SEMPLICI</div>
+          <div class="grid3">
+            <div class="pill pill-yellow">
+              <div class="pill-label">ATT. PERSA TOTALE</div>
+              <div class="pill-value" id="totalLossAct">—<span class="pill-unit">MBq</span></div>
+            </div>
+            <div class="pill pill-neutral" id="lossEopPill">
+              <div class="pill-label">CONC. BULK @ EOP (con perdite)</div>
+              <div class="pill-value" id="lossEopVal">—<span class="pill-unit">MBq/mL</span></div>
+            </div>
+            <div class="pill pill-neutral" id="lossTcPill">
+              <div class="pill-label">CONC. BULK @ TC (con perdite)</div>
+              <div class="pill-value" id="lossTcVal">—<span class="pill-unit">MBq/mL</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Retransfer card -->
+    <div id="rtCard" class="card" style="display:none;">
+      <div class="card-header">
+        <div class="card-accent" style="background:var(--purple)"></div>
+        <span class="card-title" style="color:var(--purple)">Scenario Ritrasferimento Madre — Residuo Bulk</span>
+      </div>
+      <div class="card-body">
+        <p style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.7;">
+          Hai ritrasferito la madre dalla bulk nella vial madre per ripesarla dopo uno spillage.
+          La bulk contiene ancora un residuo radioattivo non recuperabile.
+          Inserisci i nuovi valori misurati e il residuo stimato nella bulk.
+        </p>
+
+        <div class="orig-values">
+          <div class="orig-label">VALORI ORIGINALI (DA SETUP — PRIMA DEL RITRASFERIMENTO)</div>
+          <div class="grid3">
+            <div>
+              <div style="font-size:9px;color:var(--text3);margin-bottom:4px;">VOLUME MADRE ORIG.</div>
+              <div style="font-size:14px;color:var(--text3);" id="rtOrigVol">— (inserire in Setup)</div>
+            </div>
+            <div>
+              <div style="font-size:9px;color:var(--text3);margin-bottom:4px;">ATTIVITÀ MADRE ORIG.</div>
+              <div style="font-size:14px;color:var(--text3);" id="rtOrigAct">— (inserire in Setup)</div>
+            </div>
+            <div>
+              <div style="font-size:9px;color:var(--text3);margin-bottom:4px;">CONC. MADRE ORIG.</div>
+              <div style="font-size:14px;color:var(--text3);" id="rtOrigConc">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:10px;color:var(--purple);letter-spacing:0.08em;margin-bottom:12px;">NUOVI VALORI DOPO RITRASFERIMENTO (MISURATI)</div>
+        <div class="grid3">
+          <div class="field">
+            <label>VOLUME MADRE RIPESATA</label>
+            <div class="field-row">
+              <input type="number" id="rtNewVol" min="0" step="0.01" placeholder="es. 19.5" oninput="calculateRT()">
+              <span class="unit">mL</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>ATTIVITÀ MADRE RIMISURATA</label>
+            <div class="field-row">
+              <input type="number" id="rtNewAct" min="0" step="0.001" placeholder="es. 380" oninput="calculateRT()">
+              <span class="unit">GBq</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>RESIDUO STIMATO IN BULK</label>
+            <div class="field-row">
+              <input type="number" id="rtResidue" min="0" step="0.1" placeholder="es. 1.5" oninput="calculateRT()">
+              <span class="unit">mL</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="rtResults" style="display:none;">
+          <hr class="divider">
+          <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;margin-bottom:12px;">ANALISI ATTIVITÀ REALE</div>
+          <div class="grid4" style="margin-bottom:18px;">
+            <div class="pill pill-neutral">
+              <div class="pill-label">ATT. MISURATA (vial madre)</div>
+              <div class="pill-value" id="rtMeasAct">—<span class="pill-unit">MBq</span></div>
+            </div>
+            <div class="pill pill-purple">
+              <div class="pill-label">ATT. RESIDUO (bulk)</div>
+              <div class="pill-value" id="rtResidueAct">—<span class="pill-unit">MBq</span></div>
+            </div>
+            <div class="pill pill-purple">
+              <div class="pill-label">ATT. REALE TOTALE</div>
+              <div class="pill-value pill-lg" id="rtTotalAct">—<span class="pill-unit">MBq</span></div>
+            </div>
+            <div class="pill pill-neutral">
+              <div class="pill-label">SALINE RICALCOLATA</div>
+              <div class="pill-value" id="rtSalineNew">—<span class="pill-unit">mL</span></div>
+            </div>
+          </div>
+
+          <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;margin-bottom:12px;">CONCENTRAZIONE @ EOP — CONFRONTO</div>
+          <div class="grid3" style="margin-bottom:18px;">
+            <div class="pill pill-neutral" id="rtSysConcPill">
+              <div class="pill-label">CONC. CHE CREDE IL SISTEMA</div>
+              <div class="pill-value" id="rtSysConc">—<span class="pill-unit">MBq/mL</span></div>
+            </div>
+            <div class="pill pill-neutral pill-lg" id="rtRealConcPill">
+              <div class="pill-label">CONC. REALE ATTESA (con residuo)</div>
+              <div class="pill-value" id="rtRealConc">—<span class="pill-unit">MBq/mL</span></div>
+            </div>
+            <div class="pill pill-neutral">
+              <div class="pill-label">TARGET INTERNO</div>
+              <div class="pill-value" style="color:var(--text2)">979 – 1082<span class="pill-unit">MBq/mL</span></div>
+              <div style="font-size:9px;color:var(--text3);margin-top:3px;">1030 MBq/mL ±5%</div>
+            </div>
+          </div>
+
+          <div id="rtAction"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: RIEPILOGO ════════════════════════════════════════════════════ -->
+  <div id="tab-summary" class="tab-pane">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-accent" style="background:var(--purple)"></div>
+        <span class="card-title" style="color:var(--purple)">Riepilogo Lotto Completo</span>
+      </div>
+      <div class="card-body">
+        <div class="grid2" style="gap:24px;">
+          <div>
+            <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;margin-bottom:12px;">VOLUMI</div>
+            <div id="volSummary"></div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;margin-bottom:12px;">RESE — ESITO ULTERIORI RISULTATI</div>
+            <div id="yieldSummary"></div>
+          </div>
+        </div>
+        <hr class="divider">
+        <div class="grid4" id="finalStatus"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-accent" style="background:var(--text3)"></div>
+        <span class="card-title" style="color:var(--text3)">Riferimenti Normativi</span>
+      </div>
+      <div class="card-body">
+        <table class="ref-table">
+          <tr><td>t½ Lu-177</td><td>6.647 giorni (159.53 ore) — EMA SmPC</td></tr>
+          <tr><td>IPC-1-DS Sorgente</td><td>320.0 – 480.0 GBq</td></tr>
+          <tr><td>IPC-5-DS Volume madre</td><td>≥ 16.0 mL</td></tr>
+          <tr><td>IPC-4-DS Temp. labelling</td><td>94 ± 4 °C</td></tr>
+          <tr><td>IPC-3-DS Labelling time</td><td>5 ± 0.5 min</td></tr>
+          <tr><td>IPC-5-DP Conc. bulk ufficiale @ EOP</td><td>1000 MBq/mL ±5%</td></tr>
+          <tr><td>Target interno @ EOP</td><td>1030 MBq/mL ±5% → 978.5 – 1081.5 MBq/mL</td></tr>
+          <tr><td>IPC-6-DP Dose vial @ Tinj</td><td>7400 MBq ±10%</td></tr>
+          <tr><td>Volume vial</td><td>7.5 – 12.5 mL</td></tr>
+          <tr><td>Shelf life</td><td>120 ore dal TC</td></tr>
+          <tr><td>Max vials commerciali</td><td>≤ 40</td></tr>
+          <tr><td>Drug Substance Synthesis Yield</td><td>91.2% – 102.9%</td></tr>
+          <tr><td>RP Radioactivity Yield</td><td>95.3% – 102.5%</td></tr>
+          <tr><td>Drug Product Dispensed Yield</td><td>97.5% – 100.8%</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+// ── Constants ────────────────────────────────────────────────────────────────
+const HL_H = 6.647 * 24;       // half-life in hours
+const TARGET_MBQ_ML = 1030;    // internal target MBq/mL at EOP
+const TOL = 0.05;              // ±5%
+const TARGET_INJ = 7400;       // MBq per vial at injection
+const VIAL_MIN = 7.5;
+const VIAL_MAX = 12.5;
+const SHELF_H = 120;
+const CQ_VOLS = [4.00,0.30,0.30,5.00,0.30,0.30,0.50,0.50,0.30,0.30];
+const CQ_TOTAL = CQ_VOLS.reduce((a,b)=>a+b,0); // 11.80
+
+// ── State ────────────────────────────────────────────────────────────────────
+let state = {
+  batchType: '400',
+  numVials: 40,
+  vialTinjs: {},
+  losses: [],
+  rtActive: false,
+  lossIdCounter: 0,
+  bulkMode: 'vials', // 'vials' | 'direct'
+};
+
+// ── Bulk mode ─────────────────────────────────────────────────────────────────
+function setBulkMode(mode) {
+  state.bulkMode = mode;
+  document.getElementById('btnModeVials').classList.toggle('active', mode==='vials');
+  document.getElementById('btnModeDirect').classList.toggle('active', mode==='direct');
+  document.getElementById('directBulkInputs').style.display = mode==='direct' ? 'block' : 'none';
+  calculate();
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const decay = h => Math.exp(-Math.LN2 / HL_H * h);
+const hBetween = (a, b) => (new Date(b) - new Date(a)) / 3600000;
+const fmt = (n, d=1) => isNaN(n)||n===null ? '—' : n.toFixed(d);
+const fmtDT = d => {
+  const p = n => String(n).padStart(2,'0');
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+
+function statusClass(val, min, max) {
+  if (val===null||isNaN(val)||val===0) return 'neutral';
+  return (val>=min && val<=max) ? 'green' : 'red';
+}
+
+function setPillStatus(pillId, cls) {
+  const el = document.getElementById(pillId);
+  if (!el) return;
+  el.className = `pill pill-${cls}`;
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(id) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  const idx = ['setup','vials','losses','summary'].indexOf(id);
+  document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+  calculate();
+}
+
+// ── Batch type ────────────────────────────────────────────────────────────────
+function setBatchType(t) {
+  state.batchType = t;
+  document.getElementById('btn200').classList.toggle('active', t==='200');
+  document.getElementById('btn400').classList.toggle('active', t==='400');
+}
+
+// ── Vial count ────────────────────────────────────────────────────────────────
+function setVialCount(n) {
+  state.numVials = n;
+  document.querySelectorAll('.vcount-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.textContent)===n);
+  });
+  buildVialsTable();
+  calculate();
+}
+
+function buildVialsTable() {
+  const tbody = document.getElementById('vialsTableBody');
+  tbody.innerHTML = '';
+  for (let i = 1; i <= state.numVials; i++) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="num" style="color:var(--blue)">${i}</td>
+      <td><input type="datetime-local" id="tinj_${i}" style="width:170px;padding:5px 8px;font-size:11px;"
+        value="${state.vialTinjs[i]||''}" oninput="state.vialTinjs[${i}]=this.value;calculate()"></td>
+      <td id="vh_${i}" style="color:var(--text2)">—</td>
+      <td id="vd_${i}" style="color:var(--text2)">—</td>
+      <td id="vv_${i}" style="font-weight:600">—</td>
+      <td id="vatc_${i}">—</td>
+      <td id="vatinj_${i}" style="color:var(--green);font-weight:600">—</td>
+      <td id="vmin_${i}" style="color:var(--text3)">—</td>
+      <td id="vmax_${i}" style="color:var(--text3)">—</td>
+      <td id="vstatus_${i}">—</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+// ── Losses ────────────────────────────────────────────────────────────────────
+function addLoss() {
+  const id = ++state.lossIdCounter;
+  state.losses.push({ id, point: 'pre', amt: '' });
+  renderLosses();
+  calculate();
+}
+
+function removeLoss(id) {
+  state.losses = state.losses.filter(l => l.id !== id);
+  renderLosses();
+  calculate();
+}
+
+function renderLosses() {
+  const container = document.getElementById('lossesContainer');
+  const noMsg = document.getElementById('noLossMsg');
+  if (state.losses.length === 0) {
+    container.innerHTML = '';
+    container.appendChild(noMsg);
+    noMsg.style.display = 'block';
+    return;
+  }
+  noMsg.style.display = 'none';
+  container.innerHTML = '';
+  state.losses.forEach((l, idx) => {
+    const div = document.createElement('div');
+    div.className = 'loss-entry';
+    div.innerHTML = `
+      <div class="loss-header">
+        <span class="loss-title">PERDITA ${idx+1}</span>
+        <button class="btn-remove" onclick="removeLoss(${l.id})">✕</button>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>PUNTO DI PERDITA</label>
+          <select id="lpoint_${l.id}" onchange="updateLoss(${l.id},'point',this.value)">
+            <option value="pre" ${l.point==='pre'?'selected':''}>Trasferimento madre → bulk (madre pura)</option>
+            <option value="mid" ${l.point==='mid'?'selected':''}>Aggiunta salina → bulk (soluzione parziale)</option>
+            <option value="post" ${l.point==='post'?'selected':''}>Riempimento vials dalla bulk (prodotto finito)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>VOLUME PERSO</label>
+          <div class="field-row">
+            <input type="number" id="lamt_${l.id}" min="0" step="0.1" value="${l.amt}"
+              placeholder="mL" oninput="updateLoss(${l.id},'amt',this.value)">
+            <span class="unit">mL</span>
+          </div>
+        </div>
+      </div>
+      <div id="lossinfo_${l.id}"></div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function updateLoss(id, field, val) {
+  const l = state.losses.find(x => x.id === id);
+  if (l) l[field] = val;
+  calculate();
+}
+
+// ── Retransfer ────────────────────────────────────────────────────────────────
+function toggleRetransfer() {
+  state.rtActive = !state.rtActive;
+  const toggle = document.getElementById('rtToggle');
+  const card = document.getElementById('rtCard');
+  toggle.classList.toggle('active', state.rtActive);
+  document.getElementById('rtToggleIcon').textContent = state.rtActive ? '✓' : '+';
+  document.getElementById('rtToggleLabel').textContent = state.rtActive
+    ? 'RITRASFERIMENTO ATTIVO' : 'SCENARIO RITRASFERIMENTO MADRE';
+  card.style.display = state.rtActive ? 'block' : 'none';
+  calculate();
+}
+
+function calculateRT() { calculate(); }
+
+// ── Main calculation ──────────────────────────────────────────────────────────
+function calculate() {
+  const srcGBq   = parseFloat(document.getElementById('sourceAct').value) || 0;
+  const momGBq   = parseFloat(document.getElementById('motherAct').value) || 0;
+  const momMBq   = momGBq * 1000;
+  const momVol   = parseFloat(document.getElementById('motherVol').value) || 0;
+  const tcVal    = document.getElementById('tc').value;
+  const eopVal   = document.getElementById('eop').value;
+  const tcDate   = tcVal ? new Date(tcVal) : null;
+  const eopDate  = eopVal ? new Date(eopVal) : null;
+
+  // Shelf life
+  if (tcDate) {
+    const exp = new Date(tcDate.getTime() + SHELF_H * 3600000);
+    document.getElementById('expiry').value = fmtDT(exp);
+  } else {
+    document.getElementById('expiry').value = '— inserire TC —';
+  }
+
+  // Vial calculations
+  let totalCommVol = 0, totalActTc = 0, totalActTinj = 0;
+  for (let i = 1; i <= state.numVials; i++) {
+    const tinj = state.vialTinjs[i];
+    if (!tinj || !tcDate) {
+      ['vh','vd','vv','vatc','vatinj','vmin','vmax','vstatus'].forEach(p =>
+        setCell(p+'_'+i, '—'));
+      continue;
+    }
+    const h = hBetween(tcVal, tinj);
+    if (h < 0) { setCell('vstatus_'+i, '⚠ Tinj < TC'); continue; }
+    const df = decay(h);
+    const vol = TARGET_INJ / (1000 * df);
+    const actTc = vol * 1000;
+    const actTinj = actTc * df;
+    const inVol = vol >= VIAL_MIN && vol <= VIAL_MAX;
+    const shelfOk = h <= SHELF_H;
+
+    totalCommVol += vol;
+    totalActTc += actTc;
+    totalActTinj += actTinj;
+
+    setCell('vh_'+i, fmt(h,1)+'h', 'var(--text2)');
+    setCell('vd_'+i, fmt((1-df)*100,2)+'%', 'var(--text2)');
+    setCell('vv_'+i, fmt(vol,2)+' mL', inVol ? 'var(--green)' : 'var(--red)');
+    setCell('vatc_'+i, fmt(actTc,0));
+    setCell('vatinj_'+i, fmt(actTinj,0), 'var(--green)');
+    setCell('vmin_'+i, fmt(actTinj*0.95,0), 'var(--text3)');
+    setCell('vmax_'+i, fmt(actTinj*1.05,0), 'var(--text3)');
+    const statusText = !inVol ? '✗ Vol fuori range' : !shelfOk ? '⚠ Shelf life' : '✓ OK';
+    const statusColor = (!inVol||!shelfOk) ? 'var(--red)' : 'var(--green)';
+    setCell('vstatus_'+i, statusText, statusColor);
+  }
+
+  // CQ activity
+  const cqActPerMl = 1000; // MBq/mL at TC
+  CQ_VOLS.forEach((v, i) => {
+    const el = document.getElementById('cq'+i+'act');
+    if (el) el.textContent = fmt(v * cqActPerMl, 0);
+  });
+  const cqEl = document.getElementById('cqTotalAct');
+  if (cqEl) cqEl.textContent = fmt(CQ_TOTAL * cqActPerMl, 0);
+
+  // Total bulk needed — from vials OR direct input
+  let totalBulkNeeded, directBulkActMBq;
+  if (state.bulkMode === 'direct') {
+    totalBulkNeeded = parseFloat(document.getElementById('directBulkVol').value) || 0;
+    directBulkActMBq = parseFloat(document.getElementById('directBulkAct').value) || 0;
+  } else {
+    totalBulkNeeded = totalCommVol + CQ_TOTAL;
+    directBulkActMBq = 0;
+  }
+
+  // Losses
+  const concMother = momVol > 0 ? momMBq / momVol : 0;
+  const lossPre  = state.losses.filter(l=>l.point==='pre').reduce((s,l)=>s+(parseFloat(l.amt)||0),0);
+  const lossMid  = state.losses.filter(l=>l.point==='mid').reduce((s,l)=>s+(parseFloat(l.amt)||0),0);
+  const lossPost = state.losses.filter(l=>l.point==='post').reduce((s,l)=>s+(parseFloat(l.amt)||0),0);
+
+  const actAfterPre = momMBq - concMother * lossPre;
+  const volAfterPre = momVol - lossPre;
+  const salineNeeded = totalBulkNeeded > 0 ? Math.max(0, totalBulkNeeded - volAfterPre) : 0;
+  const concDiluted = (volAfterPre + salineNeeded) > 0 ? actAfterPre / (volAfterPre + salineNeeded) : 0;
+  const actAfterMid = actAfterPre - concDiluted * lossMid;
+  const volAfterMid = volAfterPre + salineNeeded - lossMid;
+
+  // EOP → TC decay
+  const hEopTc = (eopDate && tcDate) ? hBetween(eopVal, tcVal) : null;
+  const decayEopTc = hEopTc !== null ? decay(hEopTc) : 1;
+
+  // In direct mode: use user-supplied bulk activity instead of derived
+  let finalConcEop, finalConcTc, actFinalTc, volFinalTc, concFinalTc;
+  if (state.bulkMode === 'direct' && totalBulkNeeded > 0 && directBulkActMBq > 0 && momMBq > 0) {
+    // Saline needed = bulk volume - mother volume (after pre-losses)
+    // Activity at EOP = mother activity (after pre-loss) + we use direct bulk act as the planned total
+    // Real conc at EOP = directBulkActMBq / totalBulkNeeded
+    // But we also apply losses if any
+    const actDirectAfterLosses = directBulkActMBq - concDiluted * lossMid;
+    const volDirectAfterLosses = totalBulkNeeded - lossMid;
+    finalConcEop = volDirectAfterLosses > 0 ? actDirectAfterLosses / volDirectAfterLosses : 0;
+    finalConcTc  = finalConcEop * decayEopTc;
+    actFinalTc   = actDirectAfterLosses * decayEopTc - (finalConcTc * lossPost);
+    volFinalTc   = volDirectAfterLosses - lossPost;
+    concFinalTc  = volFinalTc > 0 ? actFinalTc / volFinalTc : 0;
+  } else {
+    finalConcEop = volAfterMid > 0 ? actAfterMid / volAfterMid : 0;
+    finalConcTc  = finalConcEop * decayEopTc;
+    actFinalTc   = actAfterMid * decayEopTc - (finalConcTc * lossPost);
+    volFinalTc   = volAfterMid - lossPost;
+    concFinalTc  = volFinalTc > 0 ? actFinalTc / volFinalTc : 0;
+  }
+
+  // Loss info per entry
+  state.losses.forEach(l => {
+    const concAtPoint = l.point==='pre' ? concMother : l.point==='mid' ? concDiluted : finalConcTc;
+    const amt = parseFloat(l.amt) || 0;
+    const actLost = concAtPoint * amt;
+    const infoEl = document.getElementById('lossinfo_'+l.id);
+    if (infoEl && amt > 0 && concAtPoint > 0) {
+      infoEl.innerHTML = `
+        <div style="background:var(--bg4);border-radius:8px;padding:10px 14px;display:flex;gap:24px;margin-top:8px;">
+          <div><div style="font-size:9px;color:var(--text3)">CONC. AL PUNTO</div>
+               <div style="font-size:13px;color:var(--text)">${fmt(concAtPoint,1)} MBq/mL</div></div>
+          <div><div style="font-size:9px;color:var(--text3)">ATT. PERSA</div>
+               <div style="font-size:13px;color:var(--yellow)">${fmt(actLost,0)} MBq (${fmt(actLost/1000,3)} GBq)</div></div>
+        </div>`;
+    } else if (infoEl) {
+      infoEl.innerHTML = '';
+    }
+  });
+
+  // Setup UI updates
+  const eopStatus = statusClass(finalConcEop, TARGET_MBQ_ML*(1-TOL), TARGET_MBQ_ML*(1+TOL));
+  const tcStatus  = statusClass(concFinalTc,  1000*(1-TOL), 1000*(1+TOL));
+  const srcStatus = statusClass(srcGBq, 320, 480);
+  const synthYield = srcGBq > 0 && momGBq > 0 ? (momGBq/srcGBq)*100 : null;
+  const syStatus = synthYield !== null ? statusClass(synthYield, 91.2, 102.9) : 'neutral';
+  const momVolOk = momVol >= 16.0 ? 'green' : momVol > 0 ? 'red' : 'neutral';
+
+  // Setup pills
+  if (momMBq > 0 || srcGBq > 0) {
+    document.getElementById('synthYieldBox').style.display = 'block';
+    const sy = document.getElementById('synthYieldPill');
+    sy.className = `pill pill-${syStatus}`;
+    document.getElementById('synthYieldVal').textContent = synthYield !== null ? fmt(synthYield,2)+'%' : '—';
+
+    setPillStatus('sourceCheckPill', srcStatus);
+    document.getElementById('sourceCheckVal').textContent = srcGBq > 0 ? `${srcGBq} GBq ${srcStatus==='green'?'✓':'✗'}` : '—';
+
+    document.getElementById('concMotherVal').textContent = concMother > 0 ? `${fmt(concMother,1)} MBq/mL` : '—';
+  }
+
+  document.getElementById('salineVal').innerHTML = totalBulkNeeded > 0 && salineNeeded >= 0
+    ? `${fmt(salineNeeded,2)}<span class="pill-unit">mL</span>`
+    : '<span style="color:var(--text3);font-size:11px;">inserire Tinj o bulk diretta</span>';
+
+  setPillStatus('concEopPill', eopStatus);
+  document.getElementById('concEopVal').innerHTML = finalConcEop > 0
+    ? `${fmt(finalConcEop,0)}<span class="pill-unit">MBq/mL</span>` : '—';
+
+  setPillStatus('concTcPill', tcStatus);
+  document.getElementById('concTcVal').innerHTML = concFinalTc > 0
+    ? `${fmt(concFinalTc,0)}<span class="pill-unit">MBq/mL</span>` : '—';
+
+  setPillStatus('eopStatusPill', eopStatus);
+  document.getElementById('eopStatusVal').textContent =
+    eopStatus==='green' ? '✓ CONFORME' : eopStatus==='red' ? '✗ FUORI SPEC.' : '—';
+
+  // Vial totals
+  document.getElementById('totalVials').textContent = `${state.numVials} / 40`;
+  document.getElementById('totalCommVol').innerHTML = `${fmt(totalCommVol,2)}<span class="pill-unit">mL</span>`;
+  document.getElementById('totalActTc').innerHTML = `${fmt(totalActTc/1000,2)}<span class="pill-unit">GBq</span>`;
+  document.getElementById('totalActTinj').innerHTML = `${fmt(totalActTinj/1000,2)}<span class="pill-unit">GBq</span>`;
+
+  // Loss summary
+  const hasLosses = state.losses.some(l => parseFloat(l.amt) > 0);
+  document.getElementById('lossSummary').style.display = hasLosses ? 'block' : 'none';
+  if (hasLosses) {
+    const totalLostAct = concMother*lossPre + concDiluted*lossMid + finalConcTc*lossPost;
+    document.getElementById('totalLossAct').innerHTML = `${fmt(totalLostAct,0)}<span class="pill-unit">MBq</span>`;
+    setPillStatus('lossEopPill', eopStatus);
+    document.getElementById('lossEopVal').innerHTML = `${fmt(finalConcEop,0)}<span class="pill-unit">MBq/mL</span>`;
+    setPillStatus('lossTcPill', tcStatus);
+    document.getElementById('lossTcVal').innerHTML = `${fmt(concFinalTc,0)}<span class="pill-unit">MBq/mL</span>`;
+  }
+
+  // Retransfer
+  if (state.rtActive) {
+    const rtOrigVolEl = document.getElementById('rtOrigVol');
+    const rtOrigActEl = document.getElementById('rtOrigAct');
+    const rtOrigConcEl = document.getElementById('rtOrigConc');
+    if (rtOrigVolEl) rtOrigVolEl.textContent = momVol > 0 ? `${fmt(momVol,2)} mL` : '— (inserire in Setup)';
+    if (rtOrigActEl) rtOrigActEl.textContent = momMBq > 0 ? `${fmt(momMBq,0)} MBq` : '— (inserire in Setup)';
+    if (rtOrigConcEl) rtOrigConcEl.textContent = concMother > 0 ? `${fmt(concMother,1)} MBq/mL` : '—';
+
+    const rtNewVol = parseFloat(document.getElementById('rtNewVol').value) || 0;
+    const rtNewActMBq = (parseFloat(document.getElementById('rtNewAct').value) || 0) * 1000;
+    const rtRes = parseFloat(document.getElementById('rtResidue').value) || 0;
+
+    if (rtNewVol > 0 && rtNewActMBq > 0 && rtRes > 0 && concMother > 0) {
+      const rtResAct = rtRes * concMother;
+      const rtTotalAct = rtNewActMBq + rtResAct;
+      const rtSaline = Math.max(0, totalBulkNeeded - rtNewVol);
+      const rtTotalVol = rtNewVol + rtSaline;
+      const rtSysConc = rtTotalVol > 0 ? rtNewActMBq / rtTotalVol : 0;
+      const rtRealConc = rtTotalVol > 0 ? rtTotalAct / rtTotalVol : 0;
+      const rtRealStatus = statusClass(rtRealConc, TARGET_MBQ_ML*(1-TOL), TARGET_MBQ_ML*(1+TOL));
+
+      document.getElementById('rtResults').style.display = 'block';
+      document.getElementById('rtMeasAct').innerHTML = `${fmt(rtNewActMBq,0)}<span class="pill-unit">MBq</span>`;
+      document.getElementById('rtResidueAct').innerHTML = `${fmt(rtResAct,0)}<span class="pill-unit">MBq</span>`;
+      document.getElementById('rtTotalAct').innerHTML = `${fmt(rtTotalAct,0)}<span class="pill-unit">MBq</span>`;
+      document.getElementById('rtSalineNew').innerHTML = `${fmt(rtSaline,2)}<span class="pill-unit">mL</span>`;
+
+      const rtSysStatus = statusClass(rtSysConc, TARGET_MBQ_ML*(1-TOL), TARGET_MBQ_ML*(1+TOL));
+      setPillStatus('rtSysConcPill', rtSysStatus);
+      document.getElementById('rtSysConc').innerHTML = `${fmt(rtSysConc,0)}<span class="pill-unit">MBq/mL</span>`;
+      setPillStatus('rtRealConcPill', rtRealStatus);
+      document.getElementById('rtRealConc').innerHTML = `${fmt(rtRealConc,0)}<span class="pill-unit">MBq/mL</span>`;
+
+      // Action
+      const actionEl = document.getElementById('rtAction');
+      const tooHigh = rtRealConc > TARGET_MBQ_ML*(1+TOL);
+      const tooLow  = rtRealConc < TARGET_MBQ_ML*(1-TOL);
+      if (tooHigh) {
+        const extraSaline = rtTotalAct / TARGET_MBQ_ML - rtTotalVol;
+        const corrConc = rtTotalAct / (rtTotalVol + extraSaline);
+        actionEl.innerHTML = `
+          <div class="alert alert-purple">
+            <div class="alert-title">⚠ CONCENTRAZIONE REALE TROPPO ALTA — CORREGGIBILE</div>
+            <p style="font-size:12px;margin-bottom:12px;">
+              Conc. reale: <strong style="color:var(--purple)">${fmt(rtRealConc,0)} MBq/mL</strong> —
+              superiore al limite di ${fmt(TARGET_MBQ_ML*1.05,0)} MBq/mL.
+              Aggiungi saline extra per rientrare nel target.
+            </p>
+            <div style="background:var(--bg);border-radius:8px;padding:14px 16px;">
+              <div style="font-size:10px;color:var(--purple);letter-spacing:0.08em;margin-bottom:4px;">SALINE EXTRA DA AGGIUNGERE</div>
+              <div class="correction-value">${fmt(extraSaline,2)} mL</div>
+              <div style="font-size:11px;color:var(--text3);">
+                Conc. dopo correzione: ${fmt(corrConc,0)} MBq/mL
+                ${corrConc >= TARGET_MBQ_ML*(1-TOL) && corrConc <= TARGET_MBQ_ML*(1+TOL) ? '✓ nel range' : '⚠ verificare'}
+              </div>
+            </div>
+          </div>`;
+      } else if (tooLow) {
+        const deficit = TARGET_MBQ_ML*(1-TOL) - rtRealConc;
+        actionEl.innerHTML = `
+          <div class="alert alert-red">
+            <div class="alert-title">✗ CONCENTRAZIONE REALE TROPPO BASSA — NON CORREGGIBILE</div>
+            <p style="font-size:12px;">
+              Conc. reale: <strong style="color:var(--red)">${fmt(rtRealConc,0)} MBq/mL</strong> —
+              inferiore al limite minimo di ${fmt(TARGET_MBQ_ML*0.95,0)} MBq/mL.<br><br>
+              <strong>Deficit: ${fmt(deficit,1)} MBq/mL sotto il limite minimo.</strong><br>
+              Non è possibile correggere aggiungendo saline. Contattare il Production Supervisor — potenziale NC da documentare.
+            </p>
+          </div>`;
+      } else {
+        actionEl.innerHTML = `
+          <div class="alert alert-green">
+            <div class="alert-title">✓ CONCENTRAZIONE REALE NEI LIMITI</div>
+            <p style="font-size:12px;">
+              Nonostante il residuo nella bulk, la conc. reale ${fmt(rtRealConc,0)} MBq/mL
+              rientra nel target 1030 ±5%. Nessuna correzione necessaria.
+            </p>
+          </div>`;
+      }
+    } else {
+      document.getElementById('rtResults').style.display = 'none';
+    }
+  }
+
+  // Yields for summary
+  const dispYield = totalBulkNeeded > 0 ? (actFinalTc / (totalBulkNeeded*1000)) * 100 : null;
+  const dispStatus = dispYield !== null ? statusClass(dispYield, 97.5, 100.8) : 'neutral';
+
+  // Summary tab
+  updateSummary(momVol, salineNeeded, totalBulkNeeded, totalCommVol,
+    synthYield, syStatus, dispYield, dispStatus, finalConcEop, eopStatus,
+    state.numVials, volFinalTc);
+
+  // Status bar
+  updateStatusBar(srcStatus, srcGBq, syStatus, synthYield, momVolOk, momVol, eopStatus, finalConcEop, tcDate);
+}
+
+function setCell(id, text, color) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  if (color) el.style.color = color;
+}
+
+function updateStatusBar(srcStatus, srcGBq, syStatus, sy, momVolOk, momVol, eopStatus, eopConc, tcDate) {
+  const sb = document.getElementById('statusbar');
+  sb.innerHTML = '';
+  const tags = [
+    { cls: srcStatus, text: `Sorgente: ${srcGBq>0?srcGBq+' GBq':'—'} (320–480)` },
+    { cls: syStatus,  text: `Synth Yield: ${sy!==null?sy.toFixed(1)+'%':'—'} (91.2–102.9%)` },
+    { cls: momVolOk,  text: `Vol Madre: ${momVol>0?momVol.toFixed(2)+' mL':'—'} (≥16.0)` },
+    { cls: eopStatus, text: `Conc EOP: ${eopConc>0?eopConc.toFixed(0)+' MBq/mL':'—'} (1030±5%)` },
+    { cls: 'neutral', text: tcDate ? `Scadenza: ${fmtDT(new Date(tcDate.getTime()+120*3600000))}` : 'TC non inserito' },
+  ];
+  tags.forEach(t => {
+    const span = document.createElement('span');
+    span.className = `tag tag-${t.cls}`;
+    span.textContent = t.text;
+    sb.appendChild(span);
+  });
+}
+
+function updateSummary(momVol, salineNeeded, totalBulkNeeded, totalCommVol,
+  sy, syStatus, dispYield, dispStatus, eopConc, eopStatus, numVials, volFinal) {
+
+  // Vol summary
+  const volDiv = document.getElementById('volSummary');
+  const rows = [
+    ['Volume madre (post-sintesi)', momVol > 0 ? `${momVol.toFixed(2)} mL` : '—'],
+    ['Saline necessaria (calcolata)', salineNeeded > 0 ? `${salineNeeded.toFixed(2)} mL` : '—'],
+    ['Volume bulk totale necessario', `${totalBulkNeeded.toFixed(2)} mL`],
+    ['· di cui commerciali', `${totalCommVol.toFixed(2)} mL`],
+    ['· di cui CQ (CQ0–CQ9)', `${CQ_TOTAL.toFixed(2)} mL`],
+    ['Volume bulk disponibile', volFinal > 0 ? `${volFinal.toFixed(2)} mL` : '—'],
+  ];
+  volDiv.innerHTML = rows.map(r => `
+    <div class="vol-row">
+      <span class="vol-label">${r[0]}</span>
+      <span class="vol-value">${r[1]}</span>
+    </div>`).join('');
+
+  // Yield summary
+  const yDiv = document.getElementById('yieldSummary');
+  yDiv.innerHTML = [
+    { label:'Drug Substance Synthesis Yield', range:'91.2% – 102.9%', val: sy!==null?sy.toFixed(2)+'%':'—', st:syStatus },
+    { label:'Drug Product Radioactivity Yield', range:'95.3% – 102.5%', val:'— (da QC)', st:'neutral' },
+    { label:'Drug Product Dispensed Yield', range:'97.5% – 100.8%', val: dispYield!==null?dispYield.toFixed(2)+'%':'—', st:dispStatus },
+  ].map(r => `
+    <div class="yield-row yield-row-${r.st}">
+      <div class="yield-name">${r.label}</div>
+      <div class="yield-flex">
+        <span class="yield-val">${r.val}</span>
+        <span class="yield-range">Range: ${r.range}</span>
+      </div>
+    </div>`).join('');
+
+  // Final status
+  const overall = (eopStatus==='red' || syStatus==='red' || dispStatus==='red') ? 'red'
+    : (eopStatus==='green' && syStatus!=='red') ? 'green' : 'yellow';
+  const overallText = overall==='green' ? '✓ CONFORME' : overall==='red' ? '✗ NON CONFORME' : '⚠ VERIFICARE';
+  document.getElementById('finalStatus').innerHTML = `
+    <div class="pill pill-neutral">
+      <div class="pill-label">VIALS TOTALI</div>
+      <div class="pill-value">${numVials+10} / 50</div>
+    </div>
+    <div class="pill pill-neutral">
+      <div class="pill-label">COMM. + CQ</div>
+      <div class="pill-value">${numVials} + 10</div>
+    </div>
+    <div class="pill pill-${eopStatus}">
+      <div class="pill-label">CONC. BULK @ EOP</div>
+      <div class="pill-value">${eopConc>0?eopConc.toFixed(0):'—'}<span class="pill-unit">MBq/mL</span></div>
+    </div>
+    <div class="pill pill-${overall} pill-lg">
+      <div class="pill-label">STATO LOTTO</div>
+      <div class="pill-value">${overallText}</div>
+    </div>`;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(function init() {
+  // Set default TC to tomorrow 00:15
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 15, 0, 0);
+  const pad = n => String(n).padStart(2,'0');
+  const dtLocal = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  document.getElementById('tc').value = dtLocal(tomorrow);
+
+  buildVialsTable();
+  calculate();
+})();
+</script>
+</body>
+</html>
